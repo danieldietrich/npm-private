@@ -156,7 +156,7 @@ function ghDownload() {
     ghDownloadAsset "${DOWNLOAD_URL}" "${NPM_REPOSITORY}/${GITHUB_ORG}/${GITHUB_REPO}/${TAG_NAME}" "${ASSET_NAME}"
 }
 
-echo "🚀 Downloading private npm dependencies"
+echo "🚀 Pre-processing private dependencies hosted on GitHub"
 
 # read github token
 GITHUB_TOKEN=$(ghToken)
@@ -165,7 +165,7 @@ GITHUB_TOKEN=$(ghToken)
 DEPENDENCIES=$(grep "file:${NPM_REPOSITORY}/" < package.json | awk '{ print $2 }')
 
 if [ -z "${DEPENDENCIES}" ]; then
-    echo "☕️ No private npm dependencies found."
+    echo "☕️ No private dependencies found."
 else
     while read -r DEPENDENCY; do
 
@@ -176,18 +176,22 @@ else
         TAG_NAME="${ARRAY[4]}"
         ASSET_NAME="${ARRAY[5]}"
 
-        echo "☕️ Downloading dependency ${GITHUB_ORG}/${GITHUB_REPO}/${TAG_NAME}/${ASSET_NAME}"
-
-        if [ "${GITHUB_REPO}-${TAG_NAME}.tgz" != "${ASSET_NAME}" ]; then
-            echo "💥 ERROR: Wrong dependency scheme. Tag '${TAG_NAME}' differs from asset version '${ASSET_NAME}'"
-            exit 1
-        fi
-
         ghCheckForUpdates "${GITHUB_ORG}" "${GITHUB_REPO}" "${TAG_NAME}"
 
-        ghDownload "${GITHUB_ORG}" "${GITHUB_REPO}" "${TAG_NAME}"
+        if [ ! -f "${NPM_REPOSITORY}/${GITHUB_ORG}/${GITHUB_REPO}/${TAG_NAME}/${ASSET_NAME}" ]; then
+
+            echo "☕️ Downloading dependency ${GITHUB_ORG}/${GITHUB_REPO}/${TAG_NAME}/${ASSET_NAME}"
+
+            if [ "${GITHUB_REPO}-${TAG_NAME}.tgz" != "${ASSET_NAME}" ]; then
+                echo "💥 ERROR: Wrong dependency scheme. Tag '${TAG_NAME}' differs from asset version '${ASSET_NAME}'"
+                exit 1
+            fi
+
+            ghDownload "${GITHUB_ORG}" "${GITHUB_REPO}" "${TAG_NAME}"
+
+        fi
 
     done <<< "$DEPENDENCIES"
 fi
 
-echo "✅ Success!"
+echo "👍 Done!"
