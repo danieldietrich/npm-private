@@ -179,16 +179,8 @@ else
         ghCheckForUpdates "${GITHUB_ORG}" "${GITHUB_REPO}" "${TAG_NAME}"
 
         if [ ! -f "${NPM_REPOSITORY}/${GITHUB_ORG}/${GITHUB_REPO}/${TAG_NAME}/${ASSET_NAME}" ]; then
-
             echo "☕️ Downloading dependency ${GITHUB_ORG}/${GITHUB_REPO}/${TAG_NAME}/${ASSET_NAME}"
-
-            if [ "${GITHUB_REPO}-${TAG_NAME}.tgz" != "${ASSET_NAME}" ]; then
-                echo "💥 ERROR: Wrong dependency scheme. Tag '${TAG_NAME}' differs from asset version '${ASSET_NAME}'"
-                exit 1
-            fi
-
             ghDownload "${GITHUB_ORG}" "${GITHUB_REPO}" "${TAG_NAME}"
-
         fi
 
     done <<< "$DEPENDENCIES"
