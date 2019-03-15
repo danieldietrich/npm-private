@@ -75,7 +75,8 @@ function ghRelease() {
     TAG_NAME=$(if [ -z "$3" ]; then echo "latest"; else echo "tags/$3"; fi)
     RELEASE=$(${CURL} -H "Authorization: token ${GITHUB_TOKEN}" https://api.github.com/repos/${GITHUB_ORG}/${GITHUB_REPO}/releases/${TAG_NAME})
     if [[ $? -ne 0 ]]; then
-        (>&2 echo "💥 ERROR: Fetching latest ${GITHUB_ORG}/${GITHUB_REPO} release from GitHub.")
+        TAG_NAME=$(if [ -z "$3" ]; then echo "latest"; else echo "tag/$3"; fi)
+        (>&2 echo "💥 ERROR: Fetching latest release of https://github.com/${GITHUB_ORG}/${GITHUB_REPO}/releases/${TAG_NAME}")
         (>&2 echo "$RELEASE")
         exit 1
     else
@@ -130,10 +131,10 @@ function ghCheckForUpdates() {
     LATEST_RELEASE=$(ghRelease "${GITHUB_ORG}" "${GITHUB_REPO}")
     LATEST_TAG_NAME=$(jsonValue "$(json "${LATEST_RELEASE}" "tag_name")")
     if [ "${LATEST_TAG_NAME}" == "undefined" ]; then
-        echo "💣 WARN: No release found for ${GITHUB_ORG}/${GITHUB_REPO}"
+        echo "💣 WARN: No release found for https://github.com/${GITHUB_ORG}/${GITHUB_REPO}"
     else
         if [ "${LATEST_TAG_NAME}" \> "${TAG_NAME}" ]; then
-           echo "💣 WARN: Newer release of ${GITHUB_ORG}/${GITHUB_REPO} found: ${TAG_NAME} -> ${LATEST_TAG_NAME}"
+           echo "💣 WARN: Newer release of https://github.com/${GITHUB_ORG}/${GITHUB_REPO} found: ${TAG_NAME} -> ${LATEST_TAG_NAME}"
         fi
     fi
 }
@@ -142,18 +143,31 @@ function ghDownload() {
     GITHUB_ORG=$1
     GITHUB_REPO=$2
     TAG_NAME=$3
-
-    # get download url
+    ASSET_NAME=$4
     RELEASE=$(ghRelease "${GITHUB_ORG}" "${GITHUB_REPO}" "${TAG_NAME}")
     ASSETS=$(json "${RELEASE}" "assets")
-    ASSET=$(json "${ASSETS}" "0")
-    CONTENT_TYPE=$(jsonValue "$(json "${ASSET}" "content_type")")
-    ASSET_NAME=$(jsonValue "$(json "${ASSET}" "name")")
-    ASSET_URL=$(jsonValue "$(json "${ASSET}" "url")")
-    DOWNLOAD_URL=$(ghDownloadUrl "${CONTENT_TYPE}" "${ASSET_URL}")
-
-    # download asset
-    ghDownloadAsset "${DOWNLOAD_URL}" "${NPM_REPOSITORY}/${GITHUB_ORG}/${GITHUB_REPO}/${TAG_NAME}" "${ASSET_NAME}"
+    ASSET_COUNT=$(${NODE} -p "JSON.parse(process.argv[1]).length" "$ASSETS")
+    if [ "$ASSET_COUNT" -eq 0 ]; then
+        (>&2 echo "💥 ERROR: Release https://github.com/${GITHUB_ORG}/${GITHUB_REPO}/releases/tag/${TAG_NAME} has no assets")
+        exit 1
+    fi
+    FOUND=0
+    for (( i = 0; i < "$ASSET_COUNT"; i++ )); do
+        ASSET=$(json "${ASSETS}" "$i")
+        CONTENT_TYPE=$(jsonValue "$(json "${ASSET}" "content_type")")
+        FILE_NAME=$(jsonValue "$(json "${ASSET}" "name")")
+        if [ "$ASSET_NAME" == "$FILE_NAME" ]; then
+            echo "☕️ Downloading https://github.com/${GITHUB_ORG}/${GITHUB_REPO}/releases/download/${TAG_NAME}/${FILE_NAME}"
+            ASSET_URL=$(jsonValue "$(json "${ASSET}" "url")")
+            DOWNLOAD_URL=$(ghDownloadUrl "${CONTENT_TYPE}" "${ASSET_URL}")
+            ghDownloadAsset "${DOWNLOAD_URL}" "${NPM_REPOSITORY}/${GITHUB_ORG}/${GITHUB_REPO}/${TAG_NAME}" "${FILE_NAME}"
+            FOUND=1
+        fi
+    done
+    if [ "$FOUND" -eq 0 ]; then
+        (>&2 echo "💥 ERROR: Release https://github.com/${GITHUB_ORG}/${GITHUB_REPO}/releases/tag/${TAG_NAME} has no asset ${ASSET_NAME}")
+        exit 1
+    fi
 }
 
 echo "🚀 Pre-processing private dependencies hosted on GitHub"
@@ -179,8 +193,7 @@ else
         ghCheckForUpdates "${GITHUB_ORG}" "${GITHUB_REPO}" "${TAG_NAME}"
 
         if [ ! -f "${NPM_REPOSITORY}/${GITHUB_ORG}/${GITHUB_REPO}/${TAG_NAME}/${ASSET_NAME}" ]; then
-            echo "☕️ Downloading dependency ${GITHUB_ORG}/${GITHUB_REPO}/${TAG_NAME}/${ASSET_NAME}"
-            ghDownload "${GITHUB_ORG}" "${GITHUB_REPO}" "${TAG_NAME}"
+            ghDownload "${GITHUB_ORG}" "${GITHUB_REPO}" "${TAG_NAME}" "${ASSET_NAME}"
         fi
 
     done <<< "$DEPENDENCIES"
