@@ -39,7 +39,6 @@ Either the token can be provided
 
 Notes:
 
-* by convention `<asset-name>` must equal `<github-repo>-<tag-name>.tgz`
-* it works also with peerDependencies and devDependencies
+* it works also with `peerDependencies` and `devDependencies`
 * the download folder `.npm-private` is not checked in
 * team mates just have to start `npm install` to install private dependencies
