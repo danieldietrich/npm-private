@@ -13,9 +13,7 @@ Either the token can be provided
 
 ## Usage
 
-1. Add `.npm-private/` to your `.gitignore`
-
-2. Call the script in the `scripts.preinstall` section of the `package.json`:
+1. Call the script in the `scripts.preinstall` section of the `package.json`:
 
 ```json
 {
@@ -25,12 +23,12 @@ Either the token can be provided
 }
 ```
 
-3. Manually add dependencies to the `package.json`:
+2. Manually add dependencies to the `package.json`:
 
 ```json
 {
     "dependencies": {
-        "<package-name>": "file:.npm-private/<github-org>/<github-repo>/<tag-name>/<asset-name>"
+        "<package-name>": "file:~/.npm-private/<github-org>/<github-repo>/<tag-name>/<asset-name>"
     }
 }
 ```
