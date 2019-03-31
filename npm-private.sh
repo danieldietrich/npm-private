@@ -195,10 +195,10 @@ else
 
         # parse dependency
         IFS='/"' read -ra ARRAY <<< "$DEPENDENCY"
-        GITHUB_ORG="${ARRAY[2]}"
-        GITHUB_REPO="${ARRAY[3]}"
-        TAG_NAME="${ARRAY[4]}"
-        ASSET_NAME="${ARRAY[5]}"
+        GITHUB_ORG="${ARRAY[3]}"
+        GITHUB_REPO="${ARRAY[4]}"
+        TAG_NAME="${ARRAY[5]}"
+        ASSET_NAME="${ARRAY[6]}"
 
         ghCheckForUpdates "${GITHUB_ORG}" "${GITHUB_REPO}" "${TAG_NAME}"
 
