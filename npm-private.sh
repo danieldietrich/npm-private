@@ -8,13 +8,23 @@
 # immediately exit if a function call fails
 set -e
 
+ensure_command_available() {
+    command -v "$1" >/dev/null 2>&1 || {
+        (>&2 echo "💥 $1 is not installed")
+        exit 1
+    }
+}
+
+ensure_command_available curl
+ensure_command_available node
+
 # commands
 CURL="curl --silent"
 NODE="node"
 
 # locations
 GIT_CONFIG="$HOME/.gitconfig"
-NPM_REPOSITORY=".npm-private" # no trailing slash '/'
+NPM_REPOSITORY="${HOME}/.npm-private" # no trailing slash '/'
 
 function json() {
     JSON=$1
