@@ -24,7 +24,7 @@ NODE="node"
 
 # locations
 GIT_CONFIG="$HOME/.gitconfig"
-NPM_REPOSITORY="${HOME}/.npm-private" # no trailing slash '/'
+NPM_REPOSITORY=".npm-private" # no leading or trailing slash '/'
 
 function json() {
     JSON=$1
@@ -170,7 +170,7 @@ function ghDownload() {
             echo "☕️ Downloading https://github.com/${GITHUB_ORG}/${GITHUB_REPO}/releases/download/${TAG_NAME}/${FILE_NAME}"
             ASSET_URL=$(jsonValue "$(json "${ASSET}" "url")")
             DOWNLOAD_URL=$(ghDownloadUrl "${CONTENT_TYPE}" "${ASSET_URL}")
-            ghDownloadAsset "${DOWNLOAD_URL}" "${NPM_REPOSITORY}/${GITHUB_ORG}/${GITHUB_REPO}/${TAG_NAME}" "${FILE_NAME}"
+            ghDownloadAsset "${DOWNLOAD_URL}" "${HOME}/${NPM_REPOSITORY}/${GITHUB_ORG}/${GITHUB_REPO}/${TAG_NAME}" "${FILE_NAME}"
             FOUND=1
         fi
     done
@@ -186,7 +186,7 @@ echo "🚀 Pre-processing private dependencies hosted on GitHub"
 GITHUB_TOKEN=$(ghToken)
 
 # download dependencies
-DEPENDENCIES=$(grep "file:${NPM_REPOSITORY}/" < package.json | awk '{ print $2 }')
+DEPENDENCIES=$(grep "file:~/${NPM_REPOSITORY}/" < package.json | awk '{ print $2 }')
 
 if [ -z "${DEPENDENCIES}" ]; then
     echo "☕️ No private dependencies found."
@@ -202,7 +202,7 @@ else
 
         ghCheckForUpdates "${GITHUB_ORG}" "${GITHUB_REPO}" "${TAG_NAME}"
 
-        if [ ! -f "${NPM_REPOSITORY}/${GITHUB_ORG}/${GITHUB_REPO}/${TAG_NAME}/${ASSET_NAME}" ]; then
+        if [ ! -f "${HOME}/${NPM_REPOSITORY}/${GITHUB_ORG}/${GITHUB_REPO}/${TAG_NAME}/${ASSET_NAME}" ]; then
             ghDownload "${GITHUB_ORG}" "${GITHUB_REPO}" "${TAG_NAME}" "${ASSET_NAME}"
         fi
 
