@@ -156,6 +156,10 @@ function ghDownload() {
     ASSET_NAME=$4
     RELEASE=$(ghRelease "${GITHUB_ORG}" "${GITHUB_REPO}" "${TAG_NAME}")
     ASSETS=$(json "${RELEASE}" "assets")
+    if [ "$ASSETS" == "undefined" ]; then
+        (>&2 echo "💥 ERROR: GitHub release is missing for tag https://github.com/${GITHUB_ORG}/${GITHUB_REPO}/releases/tag/${TAG_NAME}")
+        exit 1
+    fi
     ASSET_COUNT=$(${NODE} -p "JSON.parse(process.argv[1]).length" "$ASSETS")
     if [ "$ASSET_COUNT" -eq 0 ]; then
         (>&2 echo "💥 ERROR: Release https://github.com/${GITHUB_ORG}/${GITHUB_REPO}/releases/tag/${TAG_NAME} has no assets")
