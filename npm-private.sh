@@ -97,7 +97,7 @@ function ghRelease() {
 function ghDownloadUrl() {
     CONTENT_TYPE=$1
     ASSET_URL=$2
-    RESPONSE=$(${CURL} -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept:${CONTENT_TYPE}" -i "${ASSET_URL}")
+    RESPONSE=$(${CURL} -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept:${CONTENT_TYPE}" -i "${ASSET_URL}" | tr -d '\r')
     if [[ $? -ne 0 ]]; then
         (>&2 echo "💥 ERROR: Fetching download url for asset ${ASSET_URL}")
         (>&2 echo "$RESPONSE")
@@ -125,7 +125,7 @@ function ghDownloadAsset() {
         (>&2 echo "💥 ERROR: Creating directory ${TARGET_PATH}")
         exit 1
     else
-        RESPONSE=$(${CURL} "${DOWNLOAD_URL%?}" > "${TARGET}")
+        RESPONSE=$(${CURL} "${DOWNLOAD_URL}" > "${TARGET}")
         if [[ $? -ne 0 ]]; then
             (>&2 echo "💥 ERROR: Dowloading GitHub asset ${DOWNLOAD_URL} to ${TARGET}")
             (>&2 echo "${RESPONSE}")
